@@ -1,0 +1,61 @@
+{
+  "run": {
+    "id": "run-demo-001",
+    "started_at": "2026-09-19T17:00:00Z"
+  },
+  "goal": {
+    "requested": "Compare two papers and cite the stronger evidence."
+  },
+  "context": {
+    "effective": [
+      {"ref": "prompt:sha256:abc", "kind": "system_prompt"},
+      {"ref": "paper:sha256:def", "kind": "document"}
+    ],
+    "artifacts": [
+      {"id": "paper-a", "version": "sha256:def"}
+    ]
+  },
+  "configuration": {
+    "agent_version": "research-agent@1.2.0",
+    "model": "example-model-1",
+    "prompt_version": "compare-papers@3",
+    "tools": [
+      {"name": "read_document", "schema_version": "1"}
+    ]
+  },
+  "steps": [
+    {
+      "id": "step-1",
+      "action": {
+        "id": "call-1",
+        "name": "read_document",
+        "arguments": {"document_id": "paper-a"}
+      },
+      "observation": {
+        "source_action_id": "call-1",
+        "content_ref": "artifact:sha256:789"
+      },
+      "self_report": {
+        "current_goal": "Check the paper's evidence section.",
+        "evidence_class": "agent_self_report",
+        "prompt_version": "before-action@1"
+      }
+    }
+  ],
+  "changes": [
+    {"target": "working_context", "before": "sha256:111", "after": "sha256:222"}
+  ],
+  "artifacts": [
+    {"id": "paper-a", "version": "sha256:def"}
+  ],
+  "outcome": {
+    "status": "completed",
+    "evidence": ["test:citations-resolve"],
+    "feedback": [
+      {"source": "citation-checker", "value": "pass", "step_id": "step-1"}
+    ]
+  },
+  "missingness": [
+    {"field": "raw_chain_of_thought", "reason": "provider_unavailable"}
+  ]
+}

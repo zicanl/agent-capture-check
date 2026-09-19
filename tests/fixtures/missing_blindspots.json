@@ -1,0 +1,22 @@
+{
+  "trace_id": "trace-incomplete-001",
+  "input": "Compare two papers.",
+  "configuration": {
+    "model": "example-model-1"
+  },
+  "steps": [
+    {
+      "id": "step-1",
+      "action": {
+        "id": "call-1",
+        "name": "read_document"
+      },
+      "observation": {
+        "content": "Paper contents"
+      }
+    }
+  ],
+  "outcome": {
+    "status": "completed"
+  }
+}
