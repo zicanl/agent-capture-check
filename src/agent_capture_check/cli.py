@@ -20,7 +20,7 @@ def _load(path: Path) -> dict[str, Any]:
 
 
 def _render_text(report: Report) -> str:
-    lines = [f"Profile: {report.profile}"]
+    lines = [f"Profile: {report.profile}", f"Input format: {report.input_format}"]
     for result in report.results:
         lines.append(f"{result.status.value.upper():8} {result.rule_id:30} {result.message}")
         if result.remediation and result.status.value != "pass":
@@ -41,7 +41,18 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("path", type=Path, help="Path to a JSON execution record")
     parser.add_argument("--profile", choices=sorted(PROFILES), default="baseline")
-    parser.add_argument("--format", choices=("text", "json"), default="text")
+    parser.add_argument(
+        "--input-format",
+        choices=("auto", "generic", "otlp-json", "span-json"),
+        default="auto",
+    )
+    parser.add_argument(
+        "--output-format",
+        "--format",
+        dest="output_format",
+        choices=("text", "json"),
+        default="text",
+    )
     return parser
 
 
@@ -50,11 +61,11 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         data = _load(args.path)
-        report = check_run(data, args.profile)
+        report = check_run(data, args.profile, args.input_format)
     except (OSError, json.JSONDecodeError, ValueError) as exc:
         parser.error(str(exc))
 
-    if args.format == "json":
+    if args.output_format == "json":
         print(json.dumps(report.to_dict(), indent=2, ensure_ascii=False))
     else:
         print(_render_text(report))

@@ -52,7 +52,8 @@ PASS     missingness.declared         Missing or redacted data has an explicit r
 ```bash
 agent-capture-check path/to/run.json
 agent-capture-check path/to/run.json --profile learning-ready
-agent-capture-check path/to/run.json --format json
+agent-capture-check path/to/otlp.json --input-format auto
+agent-capture-check path/to/run.json --output-format json
 ```
 
 Exit codes are CI-friendly:
@@ -75,7 +76,13 @@ The fixture accepts a Python mapping or a path to JSON and raises an assertion c
 
 ## Input and adapters
 
-The prototype accepts JSON objects and looks for semantic evidence rather than requiring a new interchange format. It recognizes the included example shape and common OpenTelemetry/OpenInference-style attribute names. Adapters for established formats should translate evidence into the checker; this project should not become another trace storage format.
+The prototype accepts JSON objects and looks for semantic evidence rather than requiring a new interchange format. It currently auto-detects:
+
+- generic JSON evidence documents;
+- OTLP JSON with `resourceSpans`;
+- JSON documents containing a `spans` array with OpenTelemetry/OpenInference-style attributes.
+
+Adapters translate established formats into an internal evidence view used only for checking. This project should not become another trace storage format.
 
 ## Capture profiles
 

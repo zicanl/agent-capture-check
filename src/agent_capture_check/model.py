@@ -29,6 +29,7 @@ class CheckResult:
 @dataclass(frozen=True)
 class Report:
     profile: str
+    input_format: str
     results: tuple[CheckResult, ...]
 
     @property
@@ -44,6 +45,7 @@ class Report:
     def to_dict(self) -> dict[str, Any]:
         return {
             "profile": self.profile,
+            "input_format": self.input_format,
             "summary": self.counts(),
             "results": [result.to_dict() for result in self.results],
         }

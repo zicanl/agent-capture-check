@@ -1,4 +1,5 @@
 import json
+from copy import deepcopy
 from pathlib import Path
 
 import pytest
@@ -32,6 +33,28 @@ def test_missing_blindspots_fail_baseline() -> None:
 def test_unknown_profile_is_rejected() -> None:
     with pytest.raises(ValueError, match="Unknown profile"):
         check_run({}, "future-perfect")
+
+
+def test_openinference_otlp_is_detected_and_passes_baseline() -> None:
+    report = check_run(load("openinference_otlp.json"), "baseline")
+    assert report.input_format == "otlp-json"
+    assert not report.failed, report.to_dict()
+
+
+def test_otlp_trace_is_not_enough_when_decision_context_is_omitted() -> None:
+    run = deepcopy(load("openinference_otlp.json"))
+    root_attributes = run["resourceSpans"][0]["scopeSpans"][0]["spans"][0]["attributes"]
+    root_attributes[:] = [
+        attribute
+        for attribute in root_attributes
+        if attribute["key"] not in {"gen_ai.input.messages", "gen_ai.tool.definitions"}
+    ]
+
+    report = check_run(run, "baseline")
+    failed = {result.rule_id for result in report.results if result.status.value == "fail"}
+
+    assert "context.effective" in failed
+    assert "capabilities.available" in failed
 
 
 def test_pytest_fixture_accepts_mapping(capture_check) -> None:

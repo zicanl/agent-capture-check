@@ -1,0 +1,48 @@
+{
+  "resourceSpans": [
+    {
+      "resource": {
+        "attributes": [
+          {"key": "service.name", "value": {"stringValue": "paper-agent"}}
+        ]
+      },
+      "scopeSpans": [
+        {
+          "scope": {"name": "openinference.instrumentation.demo"},
+          "spans": [
+            {
+              "traceId": "0123456789abcdef0123456789abcdef",
+              "spanId": "1111111111111111",
+              "name": "research-agent",
+              "status": {"code": "STATUS_CODE_OK"},
+              "attributes": [
+                {"key": "openinference.span.kind", "value": {"stringValue": "AGENT"}},
+                {"key": "input.value", "value": {"stringValue": "Compare two papers."}},
+                {"key": "output.value", "value": {"stringValue": "Paper A is better supported."}},
+                {"key": "gen_ai.agent.version", "value": {"stringValue": "paper-agent@1.0"}},
+                {"key": "gen_ai.prompt.version", "value": {"stringValue": "compare@2"}},
+                {"key": "gen_ai.request.model", "value": {"stringValue": "example-model"}},
+                {"key": "gen_ai.input.messages", "value": {"stringValue": "[{\"role\":\"user\",\"content\":\"Compare two papers.\"}]"}},
+                {"key": "gen_ai.tool.definitions", "value": {"stringValue": "[{\"name\":\"read_document\"}]"}},
+                {"key": "agent.capture.missingness", "value": {"stringValue": "[{\"field\":\"raw_chain_of_thought\",\"reason\":\"provider_unavailable\"}]"}}
+              ]
+            },
+            {
+              "traceId": "0123456789abcdef0123456789abcdef",
+              "spanId": "2222222222222222",
+              "parentSpanId": "1111111111111111",
+              "name": "read_document",
+              "attributes": [
+                {"key": "openinference.span.kind", "value": {"stringValue": "TOOL"}},
+                {"key": "tool.call.id", "value": {"stringValue": "call-1"}},
+                {"key": "tool.name", "value": {"stringValue": "read_document"}},
+                {"key": "input.value", "value": {"stringValue": "{\"document_id\":\"paper-a\"}"}},
+                {"key": "output.value", "value": {"stringValue": "Document contents"}}
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
