@@ -26,10 +26,14 @@ See [the capture model](docs/capture-model.md) for scope and collection tradeoff
 ## Quick start
 
 ```bash
+git clone https://github.com/zicanl/agent-capture-check.git
+cd agent-capture-check
 python -m pip install -e '.[test]'
 agent-capture-check tests/fixtures/complete_run.json --profile baseline
 pytest
 ```
+
+For a clean-room test on another machine, follow [Test drive as a new user](docs/test-drive.md). It explains what to try, what feedback is useful, and how to contribute a sanitized failing fixture without publishing private trace content.
 
 Example output:
 
@@ -114,3 +118,5 @@ skills/review-agent-capture/ reusable coding-agent review skill
 ## Near-term validation
 
 The next milestone is not more schema. It is running the checker against three real workflows—a coding agent, a research/browser agent, and a multi-agent workflow—and removing rules that do not identify consequential information loss.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) before opening a PR, especially when feedback comes from a real production or personal trace.

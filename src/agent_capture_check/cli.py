@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import importlib.metadata
 import json
 import sys
 from pathlib import Path
@@ -40,6 +41,11 @@ def build_parser() -> argparse.ArgumentParser:
         description="Check an agent execution record for capture blind spots.",
     )
     parser.add_argument("path", type=Path, help="Path to a JSON execution record")
+    try:
+        package_version = importlib.metadata.version("agent-capture-check")
+    except importlib.metadata.PackageNotFoundError:
+        package_version = "0.1.0+local"
+    parser.add_argument("--version", action="version", version=package_version)
     parser.add_argument("--profile", choices=sorted(PROFILES), default="baseline")
     parser.add_argument(
         "--input-format",
