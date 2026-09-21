@@ -121,9 +121,23 @@ def _prefixed_attrs(spans: list[Mapping[str, Any]], *prefixes: str) -> dict[str,
     return found
 
 
+def _require_single_trace(spans: list[Mapping[str, Any]]) -> None:
+    trace_ids = {
+        str(trace_id).strip()
+        for span in spans
+        if (trace_id := span.get("traceId") or span.get("trace_id")) not in (None, "")
+    }
+    if len(trace_ids) > 1:
+        raise ValueError(
+            f"Expected one execution record, but found {len(trace_ids)} trace IDs. "
+            "Export or select a single trace before checking it."
+        )
+
+
 def _normalize_spans(spans: list[Mapping[str, Any]]) -> Mapping[str, Any]:
     if not spans:
         return {"steps": []}
+    _require_single_trace(spans)
 
     root = next((span for span in spans if not span.get("parentSpanId")), spans[0])
     trace_id = root.get("traceId") or root.get("trace_id")

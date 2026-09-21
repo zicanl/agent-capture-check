@@ -41,6 +41,47 @@ def test_openinference_otlp_is_detected_and_passes_baseline() -> None:
     assert not report.failed, report.to_dict()
 
 
+def test_span_document_does_not_combine_evidence_across_traces() -> None:
+    document = {
+        "spans": [
+            {
+                "traceId": "trace-a",
+                "spanId": "a-root",
+                "attributes": {
+                    "input.value": "Goal from trace A",
+                    "gen_ai.agent.version": "agent-a@1",
+                    "output.value": "Output from trace A",
+                },
+            },
+            {
+                "traceId": "trace-b",
+                "spanId": "b-root",
+                "attributes": {
+                    "gen_ai.request.model": "model-b",
+                    "gen_ai.prompt.version": "prompt-b@1",
+                    "gen_ai.input.messages": [{"role": "user", "content": "Context from trace B"}],
+                    "gen_ai.tool.definitions": [{"name": "tool-b"}],
+                },
+            },
+        ]
+    }
+
+    with pytest.raises(ValueError, match="found 2 trace IDs"):
+        check_run(document, "baseline")
+
+
+def test_otlp_document_with_multiple_traces_is_rejected() -> None:
+    document = deepcopy(load("openinference_otlp.json"))
+    spans = document["resourceSpans"][0]["scopeSpans"][0]["spans"]
+    second_root = deepcopy(spans[0])
+    second_root["traceId"] = "fedcba9876543210fedcba9876543210"
+    second_root["spanId"] = "3333333333333333"
+    spans.append(second_root)
+
+    with pytest.raises(ValueError, match="found 2 trace IDs"):
+        check_run(document, "baseline")
+
+
 def test_otlp_trace_is_not_enough_when_decision_context_is_omitted() -> None:
     run = deepcopy(load("openinference_otlp.json"))
     root_attributes = run["resourceSpans"][0]["scopeSpans"][0]["spans"][0]["attributes"]
