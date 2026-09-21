@@ -93,8 +93,16 @@ Adapters translate established formats into an internal evidence view used only 
 - `baseline` checks whether a run can be understood and its actions correlated.
 - `learning-ready` adds state deltas, artifact versions, and feedback linkage.
 - `elicited` adds optional agent self-reports and the metadata needed to interpret them safely.
+- `multi-agent` adds actor-scoped decision context, decision-time capability
+  references, sender/receiver handoff linkage, and declared payload
+  transformations.
 
 Profiles are intentionally incremental. Not every workflow needs every field, and prompting the agent for extra information must remain optional because it adds cost and can change behavior.
+
+The multi-agent profile operates on a canonical checking view containing
+`actors`, `observations`, `capability_sets`, `decisions`, and `handoffs`.
+Producer formats may represent these concepts differently; adapters should
+preserve stable IDs and references rather than copying large payloads.
 
 ## Design boundaries
 

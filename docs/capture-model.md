@@ -46,8 +46,24 @@ No. Requirements depend on the intended capture profile and the workflow.
 - `baseline`: enough evidence to understand the run and correlate actions with observations.
 - `learning-ready`: adds state changes, artifact identity, and linked feedback.
 - `elicited`: adds explicitly labeled self-reports when their expected value exceeds cost and observer effects.
+- `multi-agent`: adds actor-scoped observations and capabilities plus
+  sender/receiver evidence for handoffs and their transformations.
 
 A field can be `not_applicable`, but that status should be explicit rather than inferred from absence.
+
+### Multi-agent continuity
+
+Run-level evidence is insufficient when one actor produces information for
+another. Each consequential decision should identify its actor, effective
+observation references, and effective capability-set reference. Each handoff
+should preserve sender, receiver, sent payload identity, and received payload
+identity. Actor, observation, capability-set, decision, and handoff IDs must be
+stable and unique within the run.
+
+Matching payload identities require no transformation. Different identities
+require a transformation record that names its kind, input references, and
+output reference. This proves that the change was recorded; it does not prove
+that a summary or filter preserved every important semantic detail.
 
 ## Collection cost ladder
 
