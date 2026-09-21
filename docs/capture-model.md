@@ -47,7 +47,7 @@ No. Requirements depend on the intended capture profile and the workflow.
 - `learning-ready`: adds state changes, artifact identity, and linked feedback.
 - `elicited`: adds explicitly labeled self-reports when their expected value exceeds cost and observer effects.
 
-A field can be `not_applicable`, but that status should be explicit rather than inferred from absence.
+A field can be `not_applicable`, but that status should be explicit rather than inferred from absence. Only rules whose evidence class can genuinely be absent for a run honor this declaration; it cannot bypass required identity, goal, or effective-context evidence.
 
 ## Collection cost ladder
 
