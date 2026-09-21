@@ -53,6 +53,11 @@ def build_parser() -> argparse.ArgumentParser:
         default="auto",
     )
     parser.add_argument(
+        "--evidence-map",
+        type=Path,
+        help="Path to a versioned JSON map from source fields to canonical evidence",
+    )
+    parser.add_argument(
         "--output-format",
         "--format",
         dest="output_format",
@@ -67,7 +72,8 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         data = _load(args.path)
-        report = check_run(data, args.profile, args.input_format)
+        evidence_map = _load(args.evidence_map) if args.evidence_map else None
+        report = check_run(data, args.profile, args.input_format, evidence_map)
     except (OSError, json.JSONDecodeError, ValueError) as exc:
         parser.error(str(exc))
 

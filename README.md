@@ -57,6 +57,7 @@ PASS     missingness.declared         Missing or redacted data has an explicit r
 agent-capture-check path/to/run.json
 agent-capture-check path/to/run.json --profile learning-ready
 agent-capture-check path/to/otlp.json --input-format auto
+agent-capture-check path/to/custom.json --evidence-map path/to/map.json
 agent-capture-check path/to/run.json --output-format json
 ```
 
@@ -86,6 +87,11 @@ The prototype accepts JSON objects and looks for semantic evidence rather than r
 - OTLP JSON with `resourceSpans`;
 - JSON documents containing a `spans` array with OpenTelemetry/OpenInference-style attributes.
 
+Custom JSON field names can be translated with a versioned
+[evidence map](docs/evidence-maps.md). The repository includes a Hyperloom V6
+map as an example; it checks only what `session_breakdown.json` itself proves
+and does not infer evidence from sibling session files.
+
 Adapters translate established formats into an internal evidence view used only for checking. This project should not become another trace storage format.
 
 ## Capture profiles
@@ -111,7 +117,9 @@ Profiles are intentionally incremental. Not every workflow needs every field, an
 src/agent_capture_check/     checker, rules, CLI, pytest plugin
 tests/                       executable examples and regression tests
 docs/capture-model.md        data classes, collection methods, tradeoffs
+docs/evidence-maps.md        custom field mapping contract and boundaries
 docs/landscape.md            relationship to adjacent standards and tools
+examples/evidence-maps/      versioned mappings for existing producer schemas
 skills/review-agent-capture/ reusable coding-agent review skill
 ```
 

@@ -51,6 +51,13 @@ Supported inputs currently include:
 - JSON documents with a top-level `spans` array and OpenTelemetry/OpenInference-style attributes.
 
 If auto-detection is wrong, specify `--input-format generic`, `otlp-json`, or `span-json`.
+For a custom producer schema, provide a versioned
+[evidence map](evidence-maps.md). For example:
+
+```bash
+agent-capture-check session_breakdown.json \
+  --evidence-map examples/evidence-maps/hyperloom-session-breakdown-v6.json
+```
 
 Do not change your agent prompts for the first test. The first question is whether passive evidence already present in the workflow is recognized correctly.
 

@@ -8,10 +8,15 @@ from agent_capture_check import check_run
 
 
 FIXTURES = Path(__file__).parent / "fixtures"
+MAPPINGS = Path(__file__).parents[1] / "examples" / "evidence-maps"
 
 
 def load(name: str) -> dict:
     return json.loads((FIXTURES / name).read_text(encoding="utf-8"))
+
+
+def load_mapping(name: str) -> dict:
+    return json.loads((MAPPINGS / name).read_text(encoding="utf-8"))
 
 
 def test_complete_run_passes_all_profiles() -> None:
@@ -41,6 +46,99 @@ def test_openinference_otlp_is_detected_and_passes_baseline() -> None:
     assert not report.failed, report.to_dict()
 
 
+def test_custom_schema_remains_generic_without_an_evidence_map() -> None:
+    report = check_run(load("hyperloom_breakdown_v6.json"), "baseline")
+    results = {result.rule_id: result for result in report.results}
+
+    assert report.input_format == "generic"
+    assert results["run.identity"].status.value == "fail"
+    assert results["goal.explicit"].status.value == "fail"
+
+
+def test_evidence_map_translates_names_without_overclaiming_session_evidence() -> None:
+    report = check_run(
+        load("hyperloom_breakdown_v6.json"),
+        "baseline",
+        evidence_map=load_mapping("hyperloom-session-breakdown-v6.json"),
+    )
+    results = {result.rule_id: result for result in report.results}
+
+    assert report.input_format == "evidence-map:hyperloom-session-breakdown-v6"
+    assert results["run.identity"].status.value == "pass"
+    assert results["goal.explicit"].status.value == "pass"
+    assert results["outcome.evidence"].status.value == "pass"
+    assert results["outcome.evidence"].evidence == ("outcome.evidence",)
+    assert results["context.effective"].status.value == "fail"
+    assert results["capabilities.available"].status.value == "fail"
+    assert results["actions.results_linked"].status.value == "unknown"
+    assert results["missingness.declared"].status.value == "warn"
+
+
+def test_example_map_does_not_treat_workload_model_as_the_acting_model() -> None:
+    report = check_run(
+        load("hyperloom_breakdown_v6.json"),
+        "baseline",
+        evidence_map=load_mapping("hyperloom-session-breakdown-v6.json"),
+    )
+    versions = next(result for result in report.results if result.rule_id == "configuration.versions")
+
+    assert versions.status.value == "fail"
+    assert versions.evidence == ("agent:configuration.agent_version",)
+    assert "model" in versions.message
+    assert "prompt" in versions.message
+
+
+def test_evidence_map_rejects_unknown_canonical_fields() -> None:
+    evidence_map = {
+        "mapping_version": "agent-capture-map.v1",
+        "name": "invalid-map",
+        "fields": {"reasoning.ground_truth": "model.chain_of_thought"},
+    }
+
+    with pytest.raises(ValueError, match="Unknown evidence map field"):
+        check_run({}, evidence_map=evidence_map)
+
+
+def test_evidence_map_rejects_unsupported_versions() -> None:
+    evidence_map = {
+        "mapping_version": "agent-capture-map.v2",
+        "name": "future-map",
+        "fields": {"run.identity": "run.id"},
+    }
+
+    with pytest.raises(ValueError, match="Unsupported evidence map version"):
+        check_run({}, evidence_map=evidence_map)
+
+
+def test_single_value_selectors_are_ordered_fallbacks() -> None:
+    evidence_map = {
+        "mapping_version": "agent-capture-map.v1",
+        "name": "fallback-map",
+        "fields": {
+            "run.identity": ["metadata.missing_id", "metadata.session_id"],
+        },
+    }
+
+    report = check_run(
+        {"metadata": {"session_id": "run-from-fallback"}},
+        evidence_map=evidence_map,
+    )
+    identity = next(result for result in report.results if result.rule_id == "run.identity")
+
+    assert identity.status.value == "pass"
+
+
+def test_evidence_map_cannot_treat_lifecycle_status_as_outcome_evidence() -> None:
+    evidence_map = {
+        "mapping_version": "agent-capture-map.v1",
+        "name": "invalid-outcome-map",
+        "fields": {"outcome.evidence": "outcome.status"},
+    }
+
+    with pytest.raises(ValueError, match="lifecycle-only"):
+        check_run({"outcome": {"status": "completed"}}, evidence_map=evidence_map)
+
+
 def test_otlp_trace_is_not_enough_when_decision_context_is_omitted() -> None:
     run = deepcopy(load("openinference_otlp.json"))
     root_attributes = run["resourceSpans"][0]["scopeSpans"][0]["spans"][0]["attributes"]
@@ -59,3 +157,24 @@ def test_otlp_trace_is_not_enough_when_decision_context_is_omitted() -> None:
 
 def test_pytest_fixture_accepts_mapping(capture_check) -> None:
     capture_check(load("complete_run.json"), profile="baseline")
+
+
+def test_pytest_fixture_accepts_an_evidence_map(capture_check) -> None:
+    evidence_map = {
+        "mapping_version": "agent-capture-map.v1",
+        "name": "canonical-fixture",
+        "fields": {
+            "run.identity": "run.id",
+            "goal.explicit": "goal.requested",
+            "context.effective": "context.effective",
+            "configuration.agent_version": "configuration.agent_version",
+            "configuration.model": "configuration.model",
+            "configuration.prompt_version": "configuration.prompt_version",
+            "capabilities.available": "configuration.tools",
+            "actions.steps": "steps",
+            "outcome.evidence": "outcome.evidence",
+            "missingness.declared": "missingness",
+        },
+    }
+
+    capture_check(load("complete_run.json"), evidence_map=evidence_map)

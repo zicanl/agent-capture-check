@@ -4,6 +4,8 @@ import json
 from dataclasses import dataclass
 from typing import Any, Mapping
 
+from .evidence import MISSING, get_path
+
 
 @dataclass(frozen=True)
 class AdaptedRun:
@@ -11,7 +13,48 @@ class AdaptedRun:
     input_format: str
 
 
-def adapt_run(data: Mapping[str, Any], input_format: str = "auto") -> AdaptedRun:
+@dataclass(frozen=True)
+class _EvidenceMapTarget:
+    path: str
+    collect: bool = False
+    preserve_source: bool = False
+
+
+_EVIDENCE_MAP_VERSION = "agent-capture-map.v1"
+_EVIDENCE_MAP_TARGETS: dict[str, _EvidenceMapTarget] = {
+    "run.identity": _EvidenceMapTarget("run.id"),
+    "goal.explicit": _EvidenceMapTarget("goal.requested"),
+    "context.effective": _EvidenceMapTarget("context.effective", collect=True),
+    "configuration.agent_version": _EvidenceMapTarget("configuration.agent_version"),
+    "configuration.model": _EvidenceMapTarget("configuration.model"),
+    "configuration.prompt_version": _EvidenceMapTarget("configuration.prompt_version"),
+    "capabilities.available": _EvidenceMapTarget("configuration.tools", collect=True),
+    "actions.steps": _EvidenceMapTarget("steps", collect=True),
+    "outcome.status": _EvidenceMapTarget("outcome.status"),
+    "outcome.evidence": _EvidenceMapTarget(
+        "outcome.evidence",
+        collect=True,
+        preserve_source=True,
+    ),
+    "changes.state_delta": _EvidenceMapTarget("changes", collect=True),
+    "artifacts.versions": _EvidenceMapTarget("artifacts", collect=True),
+    "feedback.linked": _EvidenceMapTarget("outcome.feedback", collect=True),
+    "missingness.declared": _EvidenceMapTarget("missingness", collect=True),
+}
+_LIFECYCLE_ONLY_SUFFIXES = (".status", ".stop_reason", ".stage_reached")
+
+
+def adapt_run(
+    data: Mapping[str, Any],
+    input_format: str = "auto",
+    evidence_map: Mapping[str, Any] | None = None,
+) -> AdaptedRun:
+    if evidence_map is not None:
+        if input_format not in {"auto", "generic"}:
+            raise ValueError("An evidence map cannot be combined with a built-in input adapter.")
+        mapped, name = _apply_evidence_map(data, evidence_map)
+        return AdaptedRun(mapped, f"evidence-map:{name}")
+
     selected = detect_format(data) if input_format == "auto" else input_format
     if selected == "generic":
         return AdaptedRun(data, "generic")
@@ -100,6 +143,106 @@ def _adapt_otlp(data: Mapping[str, Any]) -> Mapping[str, Any]:
 def _adapt_span_document(data: Mapping[str, Any]) -> Mapping[str, Any]:
     spans = [span for span in data.get("spans", []) if isinstance(span, Mapping)]
     return _normalize_spans(spans)
+
+
+def _mapping_selectors(field: str, value: Any) -> tuple[str, ...]:
+    if isinstance(value, str) and value:
+        return (value,)
+    if isinstance(value, list) and value and all(isinstance(item, str) and item for item in value):
+        return tuple(value)
+    raise ValueError(
+        f"Evidence map field {field!r} must contain a non-empty selector "
+        "or list of selectors."
+    )
+
+
+def _set_path(data: dict[str, Any], path: str, value: Any) -> None:
+    parts = path.split(".")
+    current = data
+    for part in parts[:-1]:
+        child = current.get(part)
+        if not isinstance(child, dict):
+            child = {}
+            current[part] = child
+        current = child
+    current[parts[-1]] = value
+
+
+def _selected_values(
+    data: Mapping[str, Any],
+    selectors: tuple[str, ...],
+    *,
+    collect: bool,
+    preserve_source: bool,
+) -> Any:
+    selected: list[Any] = []
+    for selector in selectors:
+        value = get_path(data, selector)
+        if value is MISSING or value in (None, "", [], {}):
+            continue
+        if preserve_source:
+            selected.append({"source_path": selector, "value": value})
+        elif collect and isinstance(value, list):
+            selected.extend(value)
+        else:
+            selected.append(value)
+        if not collect:
+            break
+    if not selected:
+        return MISSING
+    return selected if collect else selected[0]
+
+
+def _validate_evidence_selector(field: str, selector: str) -> None:
+    if field != "outcome.evidence":
+        return
+    lowered = selector.lower()
+    if lowered in {"status", "stop_reason", "stage_reached"} or lowered.endswith(
+        _LIFECYCLE_ONLY_SUFFIXES
+    ):
+        raise ValueError(
+            f"Evidence map field 'outcome.evidence' cannot select lifecycle-only "
+            f"field {selector!r}."
+        )
+
+
+def _apply_evidence_map(
+    data: Mapping[str, Any],
+    evidence_map: Mapping[str, Any],
+) -> tuple[Mapping[str, Any], str]:
+    version = evidence_map.get("mapping_version")
+    if version != _EVIDENCE_MAP_VERSION:
+        raise ValueError(
+            f"Unsupported evidence map version {version!r}; "
+            f"expected {_EVIDENCE_MAP_VERSION!r}."
+        )
+    name = str(evidence_map.get("name") or "").strip()
+    if not name:
+        raise ValueError("Evidence map must define a non-empty name.")
+    fields = evidence_map.get("fields")
+    if not isinstance(fields, Mapping) or not fields:
+        raise ValueError("Evidence map must define a non-empty fields object.")
+
+    normalized: dict[str, Any] = {}
+    for field, raw_selectors in fields.items():
+        if field not in _EVIDENCE_MAP_TARGETS:
+            options = ", ".join(sorted(_EVIDENCE_MAP_TARGETS))
+            raise ValueError(f"Unknown evidence map field {field!r}. Choose one of: {options}")
+        selectors = _mapping_selectors(str(field), raw_selectors)
+        for selector in selectors:
+            _validate_evidence_selector(str(field), selector)
+        target = _EVIDENCE_MAP_TARGETS[str(field)]
+        value = _selected_values(
+            data,
+            selectors,
+            collect=target.collect,
+            preserve_source=target.preserve_source,
+        )
+        if value is not MISSING:
+            _set_path(normalized, target.path, value)
+
+    normalized.setdefault("steps", [])
+    return normalized, name
 
 
 def _first_attr(spans: list[Mapping[str, Any]], *keys: str) -> tuple[str, Any] | None:

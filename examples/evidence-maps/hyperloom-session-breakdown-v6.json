@@ -1,0 +1,16 @@
+{
+  "mapping_version": "agent-capture-map.v1",
+  "name": "hyperloom-session-breakdown-v6",
+  "fields": {
+    "run.identity": "metadata.session.session_id",
+    "goal.explicit": "metadata.task_config.objective",
+    "configuration.agent_version": "metadata.session.code_revision",
+    "outcome.status": "outcome.status",
+    "outcome.evidence": [
+      "outcome.baseline",
+      "outcome.final",
+      "outcome.validation",
+      "outcome.anchoring_eval"
+    ]
+  }
+}
