@@ -20,6 +20,17 @@ On Windows PowerShell, activate with:
 .venv\Scripts\Activate.ps1
 ```
 
+Some minimal Debian and Ubuntu images install Python without `ensurepip`, so
+`python3 -m venv .venv` exits with a message asking for `python3-venv` (or a
+versioned package such as `python3.12-venv`). Install that OS package and retry,
+or use [`uv`](https://docs.astral.sh/uv/) without modifying the system Python:
+
+```bash
+uv venv --python python3 .venv
+source .venv/bin/activate
+uv pip install --python .venv/bin/python -e '.[test]'
+```
+
 ## 2. Verify the known examples
 
 ```bash
