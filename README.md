@@ -111,6 +111,8 @@ Profiles are intentionally incremental. Not every workflow needs every field, an
 src/agent_capture_check/     checker, rules, CLI, pytest plugin
 tests/                       executable examples and regression tests
 docs/capture-model.md        data classes, collection methods, tradeoffs
+docs/multi-agent-evidence-continuity.md
+                             per-decision and handoff checking design
 docs/landscape.md            relationship to adjacent standards and tools
 skills/review-agent-capture/ reusable coding-agent review skill
 ```
@@ -118,5 +120,9 @@ skills/review-agent-capture/ reusable coding-agent review skill
 ## Near-term validation
 
 The next milestone is not more schema. It is running the checker against three real workflows—a coding agent, a research/browser agent, and a multi-agent workflow—and removing rules that do not identify consequential information loss.
+
+The [multi-agent evidence continuity](docs/multi-agent-evidence-continuity.md)
+design note defines the intended boundary for detecting information loss
+between actors without requiring chain-of-thought or inline payload duplication.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) before opening a PR, especially when feedback comes from a real production or personal trace.
