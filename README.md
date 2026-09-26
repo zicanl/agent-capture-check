@@ -138,13 +138,17 @@ docs/evidence-maps.md        custom field mapping contract and boundaries
 docs/multi-agent-evidence-continuity.md
                              per-decision and handoff checking design
 docs/landscape.md            relationship to adjacent standards and tools
+docs/roadmap.md              evidence-driven development priorities
 examples/evidence-maps/      versioned mappings for existing producer schemas
 skills/review-agent-capture/ reusable coding-agent review skill
 ```
 
 ## Near-term validation
 
-The next milestone is not more schema. It is running the checker against three real workflows—a coding agent, a research/browser agent, and a multi-agent workflow—and removing rules that do not identify consequential information loss.
+The next milestone is not more schema. It is running the checker against three
+real workflows—a coding agent, a research/browser agent, and a multi-agent
+workflow—and removing rules that do not identify consequential information
+loss. See the [roadmap](docs/roadmap.md) for the current order of work.
 
 The [multi-agent evidence continuity](docs/multi-agent-evidence-continuity.md)
 design note defines the intended boundary for detecting information loss

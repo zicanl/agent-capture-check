@@ -1,7 +1,10 @@
 # Multi-agent evidence continuity
 
-Status: design note. This document defines checking semantics, not a new trace
-transport or storage format.
+Status: partially implemented. The `multi-agent` profile covers graph identity,
+decision-scoped observations and capabilities, and handoff receipt and
+transformation linkage. Action authorization, result linkage, and outcome
+lineage remain proposed. This document defines checking semantics, not a new
+trace transport or storage format.
 
 ## Problem
 
@@ -243,15 +246,19 @@ phase action catalogue alone may not establish effective permission or
 resource availability. Policy and resource decisions need their own
 decision-time evidence.
 
-## Proposed rollout
+## Implementation status and next validation
 
-1. Finalize versioned Evidence Maps for producer-specific field names.
-2. Add a minimized synthetic multi-agent fixture with one intentionally broken
-   handoff.
-3. Implement actor-, decision-, and handoff-level normalized views.
-4. Add deterministic continuity rules and coverage counts under a separate
-   multi-agent profile.
-5. Validate against a sanitized Hyperloom session bundle and at least one
-   unrelated multi-agent runtime.
-6. Add optional semantic-continuity evaluation only after deterministic
+The repository now has versioned Evidence Maps, a synthetic multi-agent
+fixture, normalized actor/decision/handoff records, and deterministic coverage
+checks under the opt-in `multi-agent` profile.
+
+The next steps are:
+
+1. Validate the implemented rules against a sanitized Hyperloom session bundle
+   and at least one unrelated multi-agent runtime.
+2. Define authoritative joins for multi-file evidence bundles before adding a
+   bundle adapter.
+3. Implement `action.decision_linked`, strengthened action/result linkage, and
+   `outcome.lineage_present` only when real fixtures demonstrate the need.
+4. Add optional semantic-continuity evaluation only after deterministic
    boundaries are stable.
