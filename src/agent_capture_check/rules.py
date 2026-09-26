@@ -17,6 +17,33 @@ class Rule:
     check: RuleCheck
 
 
+def _declared_not_applicable(
+    data: Mapping[str, Any],
+    fields: tuple[str, ...],
+) -> str | None:
+    declared = data.get("missingness")
+    if not isinstance(declared, list):
+        return None
+    accepted = set(fields)
+    for index, item in enumerate(declared):
+        if not isinstance(item, Mapping):
+            continue
+        field = str(item.get("field") or "")
+        reason = str(item.get("reason") or "").strip().lower()
+        if field in accepted and reason == "not_applicable":
+            return f"missingness[{index}]"
+    return None
+
+
+def _not_applicable_result(rule_id: str, evidence: str) -> CheckResult:
+    return CheckResult(
+        rule_id,
+        Status.NOT_APPLICABLE,
+        "The producer explicitly declared this evidence not applicable to the run.",
+        (evidence,),
+    )
+
+
 def _presence_rule(
     rule_id: str,
     paths: tuple[str, ...],
@@ -25,6 +52,7 @@ def _presence_rule(
     remediation: str,
     *,
     missing_status: Status = Status.FAIL,
+    allow_not_applicable: bool = False,
 ) -> Rule:
     def check(data: Mapping[str, Any]) -> CheckResult:
         evidence = first_present(data, paths)
@@ -40,6 +68,10 @@ def _presence_rule(
                 success,
                 (f"attributes.{evidence[0]}",),
             )
+        if allow_not_applicable:
+            declaration = _declared_not_applicable(data, (rule_id, *paths))
+            if declaration:
+                return _not_applicable_result(rule_id, declaration)
         return CheckResult(rule_id, missing_status, failure, remediation=remediation)
 
     return Rule(rule_id, check)
@@ -99,6 +131,12 @@ def _action_result_link_check(data: Mapping[str, Any]) -> CheckResult:
                     result_ids.add(str(source_id))
 
     if not call_ids:
+        declaration = _declared_not_applicable(
+            data,
+            ("actions.results_linked", "actions", "steps.action"),
+        )
+        if declaration:
+            return _not_applicable_result("actions.results_linked", declaration)
         return CheckResult(
             "actions.results_linked",
             Status.UNKNOWN,
@@ -238,6 +276,7 @@ BASELINE_RULES = (
         "Available tools or capabilities are preserved.",
         "Only chosen actions may be visible; the available capability set is missing.",
         "Capture the advertised tool definitions, permissions, or capability-set version at decision time.",
+        allow_not_applicable=True,
     ),
     Rule("actions.results_linked", _action_result_link_check),
     Rule("outcome.evidence", _outcome_evidence_check),
@@ -252,6 +291,7 @@ LEARNING_RULES = (
         "A state change or state-delta record is preserved.",
         "Tool outputs are present, but external state change is not preserved.",
         "Record a bounded before/after reference or verified state delta for mutating actions.",
+        allow_not_applicable=True,
     ),
     _presence_rule(
         "artifacts.versions",
@@ -259,6 +299,7 @@ LEARNING_RULES = (
         "Artifacts carry identity or version evidence.",
         "Referenced artifacts cannot be tied to stable versions.",
         "Record content hashes, revisions, snapshot IDs, or immutable references.",
+        allow_not_applicable=True,
     ),
     _presence_rule(
         "feedback.linked",
@@ -267,6 +308,7 @@ LEARNING_RULES = (
         "No immediate or delayed feedback is linked to the run.",
         "Preserve feedback with run/step IDs, source, timestamp, and derivation method.",
         missing_status=Status.WARN,
+        allow_not_applicable=True,
     ),
 )
 

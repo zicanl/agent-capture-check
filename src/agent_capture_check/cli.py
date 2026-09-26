@@ -23,7 +23,8 @@ def _load(path: Path) -> dict[str, Any]:
 def _render_text(report: Report) -> str:
     lines = [f"Profile: {report.profile}", f"Input format: {report.input_format}"]
     for result in report.results:
-        lines.append(f"{result.status.value.upper():8} {result.rule_id:30} {result.message}")
+        status_label = "N/A" if result.status.value == "not_applicable" else result.status.value.upper()
+        lines.append(f"{status_label:8} {result.rule_id:30} {result.message}")
         if result.remediation and result.status.value != "pass":
             lines.append(f"         {'':30} Fix: {result.remediation}")
     counts = report.counts()
@@ -32,6 +33,8 @@ def _render_text(report: Report) -> str:
         f"{counts['pass']} passed, {counts['warn']} warned, "
         f"{counts['fail']} failed, {counts['unknown']} unknown"
     )
+    if counts["not_applicable"]:
+        lines[-1] += f", {counts['not_applicable']} not applicable"
     return "\n".join(lines)
 
 

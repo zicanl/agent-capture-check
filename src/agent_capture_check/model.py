@@ -10,6 +10,7 @@ class Status(str, Enum):
     WARN = "warn"
     FAIL = "fail"
     UNKNOWN = "unknown"
+    NOT_APPLICABLE = "not_applicable"
 
 
 @dataclass(frozen=True)

@@ -101,6 +101,10 @@ Adapters translate established formats into an internal evidence view used only 
 
 Profiles are intentionally incremental. Not every workflow needs every field, and prompting the agent for extra information must remain optional because it adds cost and can change behavior.
 
+Rules that permit an explicit `not_applicable` declaration report a distinct
+`NOT_APPLICABLE` result. Required evidence such as run identity, goal, and
+effective context cannot be bypassed with that declaration.
+
 ## Design boundaries
 
 - An LLM inference is not a substitute for missing runtime evidence.
