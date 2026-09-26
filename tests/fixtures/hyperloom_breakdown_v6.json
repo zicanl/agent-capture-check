@@ -1,0 +1,50 @@
+{
+  "schema_version": "hyperloom.session_breakdown.v6.0",
+  "exporter_version": "session-breakdown-1.0.0",
+  "metadata": {
+    "session": {
+      "session_id": "hyperloom-demo-001",
+      "code_revision": "abc1234"
+    },
+    "task_config": {
+      "model_name": "Qwen-Test",
+      "framework_name": "sglang",
+      "gpu_type": "MI300X",
+      "objective": {
+        "kind": "throughput",
+        "value": 120.0
+      }
+    },
+    "versions": {
+      "framework": "sglang",
+      "framework_version": "0.5.17"
+    },
+    "warnings": []
+  },
+  "outcome": {
+    "status": "completed",
+    "stop_reason": "target_reached",
+    "baseline": {
+      "throughput_tok_s_per_gpu": 100.0,
+      "accuracy": 0.75
+    },
+    "final": {
+      "throughput_tok_s_per_gpu": 125.0,
+      "cumulative_gain_pct_validated": 25.0
+    },
+    "validation": {
+      "graded_on": "output_throughput",
+      "validated_total_gain_pct": 25.0
+    }
+  },
+  "timeline": [],
+  "close": {
+    "status": "succeeded"
+  },
+  "critic": {
+    "iterations": []
+  },
+  "robustness": {
+    "turns": []
+  }
+}

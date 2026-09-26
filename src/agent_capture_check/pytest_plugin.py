@@ -17,6 +17,7 @@ class CaptureCheck(Protocol):
         value: Mapping[str, Any] | str | Path,
         profile: str = "baseline",
         input_format: str = "auto",
+        evidence_map: Mapping[str, Any] | None = None,
     ) -> None: ...
 
 
@@ -26,13 +27,14 @@ def capture_check() -> CaptureCheck:
         value: Mapping[str, Any] | str | Path,
         profile: str = "baseline",
         input_format: str = "auto",
+        evidence_map: Mapping[str, Any] | None = None,
     ) -> None:
         if isinstance(value, (str, Path)):
             with Path(value).open(encoding="utf-8") as handle:
                 data = json.load(handle)
         else:
             data = value
-        report = check_run(data, profile, input_format)
+        report = check_run(data, profile, input_format, evidence_map)
         if report.failed:
             pytest.fail(_render_text(report), pytrace=False)
 
