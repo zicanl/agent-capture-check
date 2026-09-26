@@ -28,6 +28,19 @@ def test_missing_blindspots_fail_baseline() -> None:
     assert "configuration.versions" in failed
     assert "capabilities.available" in failed
     assert "actions.results_linked" in failed
+    assert "outcome.evidence" in failed
+
+
+def test_completion_status_is_not_outcome_evidence() -> None:
+    run = deepcopy(load("complete_run.json"))
+    run["outcome"] = {"status": "completed"}
+
+    report = check_run(run, "baseline")
+    outcome = next(result for result in report.results if result.rule_id == "outcome.evidence")
+
+    assert outcome.status.value == "fail"
+    assert outcome.evidence == ("outcome.status",)
+    assert "completion status" in outcome.message.lower()
 
 
 def test_unknown_profile_is_rejected() -> None:

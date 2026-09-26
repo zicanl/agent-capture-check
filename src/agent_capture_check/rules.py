@@ -121,6 +121,36 @@ def _action_result_link_check(data: Mapping[str, Any]) -> CheckResult:
     )
 
 
+def _outcome_evidence_check(data: Mapping[str, Any]) -> CheckResult:
+    attributes = flatten_attribute_maps(data)
+    paths = ("outcome.evidence", "feedback", "evaluation.result")
+    for prefix, source in (("", data), ("attributes.", attributes)):
+        evidence = first_present(source, paths)
+        if evidence:
+            return CheckResult(
+                "outcome.evidence",
+                Status.PASS,
+                "The run outcome includes evidence.",
+                (f"{prefix}{evidence[0]}",),
+            )
+
+    status = first_present(data, ("outcome.status",))
+    if status:
+        return CheckResult(
+            "outcome.evidence",
+            Status.FAIL,
+            "A completion status is preserved, but no observed outcome or feedback evidence was found.",
+            (status[0],),
+            "Record observed results separately from completion or success labels.",
+        )
+    return CheckResult(
+        "outcome.evidence",
+        Status.FAIL,
+        "No observed outcome or feedback evidence was found.",
+        remediation="Record observed results separately from success labels inferred later.",
+    )
+
+
 def _missingness_check(data: Mapping[str, Any]) -> CheckResult:
     declared = data.get("missingness")
     if not isinstance(declared, list) or not declared:
@@ -210,13 +240,7 @@ BASELINE_RULES = (
         "Capture the advertised tool definitions, permissions, or capability-set version at decision time.",
     ),
     Rule("actions.results_linked", _action_result_link_check),
-    _presence_rule(
-        "outcome.evidence",
-        ("outcome.evidence", "outcome.status", "feedback", "evaluation.result"),
-        "The run outcome includes evidence.",
-        "No observed outcome or feedback evidence was found.",
-        "Record observed results separately from success labels inferred later.",
-    ),
+    Rule("outcome.evidence", _outcome_evidence_check),
     Rule("missingness.declared", _missingness_check),
 )
 
