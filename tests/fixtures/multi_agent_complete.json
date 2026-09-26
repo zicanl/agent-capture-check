@@ -1,0 +1,157 @@
+{
+  "run": {
+    "id": "multi-agent-complete-001"
+  },
+  "goal": {
+    "requested": "Research a change, review it, and apply the approved action."
+  },
+  "context": {
+    "effective": [
+      {
+        "ref": "observation:input"
+      }
+    ]
+  },
+  "configuration": {
+    "agent_version": "multi-agent-harness@1",
+    "model": "example-model-1",
+    "prompt_version": "workflow@3",
+    "tools": [
+      {
+        "name": "apply_change"
+      }
+    ]
+  },
+  "actors": [
+    {
+      "id": "agent-a",
+      "kind": "llm_agent"
+    },
+    {
+      "id": "agent-b",
+      "kind": "llm_agent"
+    },
+    {
+      "id": "agent-c",
+      "kind": "llm_agent"
+    }
+  ],
+  "observations": [
+    {
+      "id": "observation:input",
+      "digest": "sha256:input"
+    },
+    {
+      "id": "payload:a-output",
+      "digest": "sha256:a-output"
+    },
+    {
+      "id": "payload:b-full",
+      "digest": "sha256:b-full"
+    },
+    {
+      "id": "payload:b-summary",
+      "digest": "sha256:b-summary"
+    }
+  ],
+  "capability_sets": [
+    {
+      "id": "capabilities:agent-a:1"
+    },
+    {
+      "id": "capabilities:agent-b:1"
+    },
+    {
+      "id": "capabilities:agent-c:1"
+    }
+  ],
+  "decisions": [
+    {
+      "id": "decision-a-1",
+      "actor_id": "agent-a",
+      "observation_refs": [
+        "observation:input"
+      ],
+      "capability_set_ref": "capabilities:agent-a:1"
+    },
+    {
+      "id": "decision-b-1",
+      "actor_id": "agent-b",
+      "observation_refs": [
+        "payload:a-output"
+      ],
+      "capability_set_ref": "capabilities:agent-b:1"
+    },
+    {
+      "id": "decision-c-1",
+      "actor_id": "agent-c",
+      "observation_refs": [
+        "payload:b-summary"
+      ],
+      "capability_set_ref": "capabilities:agent-c:1"
+    }
+  ],
+  "handoffs": [
+    {
+      "id": "handoff-a-b-1",
+      "from_actor_id": "agent-a",
+      "to_actor_id": "agent-b",
+      "sent": {
+        "ref": "payload:a-output",
+        "digest": "sha256:a-output"
+      },
+      "received": {
+        "ref": "payload:a-output",
+        "digest": "sha256:a-output"
+      },
+      "transformation": null
+    },
+    {
+      "id": "handoff-b-c-1",
+      "from_actor_id": "agent-b",
+      "to_actor_id": "agent-c",
+      "sent": {
+        "ref": "payload:b-full",
+        "digest": "sha256:b-full"
+      },
+      "received": {
+        "ref": "payload:b-summary",
+        "digest": "sha256:b-summary"
+      },
+      "transformation": {
+        "kind": "summary",
+        "version": "handoff-summary@1",
+        "input_refs": [
+          "sha256:b-full"
+        ],
+        "output_ref": "sha256:b-summary"
+      }
+    }
+  ],
+  "steps": [
+    {
+      "id": "step-c-1",
+      "action": {
+        "id": "action-c-1",
+        "decision_id": "decision-c-1",
+        "name": "apply_change"
+      },
+      "observation": {
+        "source_action_id": "action-c-1",
+        "content_ref": "observation:result"
+      }
+    }
+  ],
+  "outcome": {
+    "status": "completed",
+    "evidence": [
+      "validation:passed"
+    ]
+  },
+  "missingness": [
+    {
+      "field": "raw_chain_of_thought",
+      "reason": "provider_unavailable"
+    }
+  ]
+}
