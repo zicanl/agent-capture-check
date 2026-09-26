@@ -86,6 +86,11 @@ The prototype accepts JSON objects and looks for semantic evidence rather than r
 - OTLP JSON with `resourceSpans`;
 - JSON documents containing a `spans` array with OpenTelemetry/OpenInference-style attributes.
 
+Each check evaluates one logical execution record. OTLP and span documents
+containing more than one non-empty trace ID are rejected rather than merging
+evidence across unrelated runs. Export or select a single trace before checking
+it.
+
 Adapters translate established formats into an internal evidence view used only for checking. This project should not become another trace storage format.
 
 ## Capture profiles
